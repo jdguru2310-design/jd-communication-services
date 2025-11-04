@@ -49,10 +49,15 @@
   <footer class="site-footer"><div class="wrap footer-inner"><div><strong>JD Communication Services</strong><br>Contact: <a href="mailto:contact@jdguru2310@gmail.com">contact@jdguru2310@gmail.com</a></div><div>© 2025</div></div></footer>
 
 <script>
-const firebaseConfig = {"apiKey": "AIzaSyCtsvnqIhbUdu7yix2RiEG2kWfeYpPznaw", "authDomain": "jdcommunicationservice.firebaseapp.com", "projectId": "jdcommunicationservice", "storageBucket": "jdcommunicationservice.appspot.com", "messagingSenderId": "236880191917", "appId": "1:236880191917:web:014d44b8ed928c90570124", "measurementId": "G-3B0BRQZ6XS"};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const storage = firebase.storage();
+ const firebaseConfig = {
+  apiKey: "AIzaSyCtsvnqIhbUdu7yix2RiEG2kWfeYpPznaw",
+  authDomain: "jdcommunicationservice.firebaseapp.com",
+  projectId: "jdcommunicationservice",
+  storageBucket: "jdcommunicationservice.firebasestorage.app",
+  messagingSenderId: "236880191917",
+  appId: "1:236880191917:web:014d44b8ed928c90570124",
+  measurementId: "G-3B0BRQZ6XS"
+};
 
 const SERVICES = [
   { id: "community", title: "Community Certificate" },
