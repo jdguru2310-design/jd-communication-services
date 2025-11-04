@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en"><head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin — JD Communication Services</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+</head><body>
+  <header class="site-header">
+    <div class="wrap">
+      <div class="brand">
+        <img src="assets/jd-logo.svg" alt="JD logo" class="logo">
+        <div class="brand-text"><h1>JD Communication Services</h1><small>Admin Panel</small></div>
+      </div>
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="services.html">Services</a>
+        <a href="request.html">Request</a>
+        <a href="admin.html">Admin</a>
+        <button id="theme-toggle" class="theme-toggle">🌙</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap admin-section">
+    <h2>Admin Dashboard</h2>
+    <p>Login with Google to view service requests.</p>
+
+    <div class="card">
+      <button id="btn-login" class="btn gradient">Sign in with Google</button>
+      <button id="btn-logout" class="btn outline" style="display:none">Sign out</button>
+    </div>
+
+    <div id="admin-area" style="display:none;margin-top:18px;">
+      <div class="card">
+        <label>Filter by service:</label>
+        <select id="filter-service"><option value="">All services</option></select>
+      </div>
+
+      <div id="requests-list" style="margin-top:12px"></div>
+    </div>
+  </main>
+
+  <footer class="site-footer"><div class="wrap footer-inner"><div><strong>JD Communication Services</strong><br>Contact: <a href="mailto:contact@jdguru2310@gmail.com">contact@jdguru2310@gmail.com</a></div><div>© 2025</div></div></footer>
+
+<script>
+const firebaseConfig = {"apiKey": "AIzaSyCtsvnqIhbUdu7yix2RiEG2kWfeYpPznaw", "authDomain": "jdcommunicationservice.firebaseapp.com", "projectId": "jdcommunicationservice", "storageBucket": "jdcommunicationservice.appspot.com", "messagingSenderId": "236880191917", "appId": "1:236880191917:web:014d44b8ed928c90570124", "measurementId": "G-3B0BRQZ6XS"};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+const SERVICES = [
+  { id: "community", title: "Community Certificate" },
+  { id: "income", title: "Income Certificate" },
+  { id: "nativity", title: "Nativity Certificate" },
+  { id: "pan", title: "PAN Card" },
+  { id: "voter", title: "Voter ID" },
+  { id: "obc", title: "OBC Certificate" },
+  { id: "pstm", title: "PSTM Certificate" }
+];
+
+const filter = document.getElementById('filter-service');
+SERVICES.forEach(function(s){ const o=document.createElement('option'); o.value=s.id; o.textContent=s.title; filter.appendChild(o); });
+
+document.getElementById('btn-login').addEventListener('click', function(){
+  var provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider);
+});
+document.getElementById('btn-logout').addEventListener('click', function(){ auth.signOut(); });
+
+auth.onAuthStateChanged(function(user){
+  var loginBtn = document.getElementById('btn-login');
+  var logoutBtn = document.getElementById('btn-logout');
+  var adminArea = document.getElementById('admin-area');
+  if(user){
+    loginBtn.style.display='none'; logoutBtn.style.display='inline-block'; adminArea.style.display='block';
+    loadRequests();
+  } else {
+    loginBtn.style.display='inline-block'; logoutBtn.style.display='none'; adminArea.style.display='none';
+  }
+});
+
+filter.addEventListener('change', function(){ loadRequests(filter.value); });
+
+async function loadRequests(filterBy=''){
+  var list = document.getElementById('requests-list');
+  list.innerHTML = "Loading...";
+  try{
+    var q = db.collection('service_requests').orderBy('createdAt','desc');
+    if(filterBy) q = q.where('service','==', filterBy);
+    var snap = await q.get();
+    if(snap.empty){ list.innerHTML = '<p>No requests yet.</p>'; return; }
+    list.innerHTML = '';
+    snap.forEach(function(doc){
+      var d = doc.data();
+      var el = document.createElement('div'); el.className='card request-item';
+      var created = d.createdAt && d.createdAt.toDate ? d.createdAt.toDate() : '';
+      el.innerHTML = '<strong>' + (d.fullName||'') + '</strong> <small>(' + (d.email||'') + ' / ' + (d.phone||'') + ')</small>' +
+        '<p><strong>Service:</strong> ' + (d.service||'') + '</p>' +
+        '<p>' + (d.notes||'') + '</p>' +
+        '<p><small>Ref: ' + doc.id + ' • ' + created + '</small></p>';
+      if(d.fileURL){ var a = document.createElement('a'); a.href=d.fileURL; a.target='_blank'; a.textContent='View attachment'; el.appendChild(a); }
+      list.appendChild(el);
+    });
+  }catch(err){ console.error(err); list.innerHTML = '<p>Error loading requests.</p>'; }
+}
+</script>
+
+</body></html>

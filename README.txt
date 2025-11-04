@@ -1,0 +1,1 @@
+JD Communication Services - enhanced package. Configure Firebase Firestore, Storage and Auth as instructed.

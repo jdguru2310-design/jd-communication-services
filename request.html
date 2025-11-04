@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en"><head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Request Service — JD Communication Services</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+</head><body>
+  <header class="site-header">
+    <div class="wrap">
+      <div class="brand">
+        <img src="assets/jd-logo.svg" alt="JD logo" class="logo">
+        <div class="brand-text"><h1>JD Communication Services</h1><small>Fast • Reliable • Paperwork made easy</small></div>
+      </div>
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="services.html">Services</a>
+        <a href="request.html">Request</a>
+        <a href="admin.html">Admin</a>
+        <button id="theme-toggle" class="theme-toggle">🌙</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap request-section">
+    <h2>Request a Service</h2>
+    <p class="muted">Fill the form below to apply. We'll process and update you.</p>
+
+    <form id="request-form" class="card form-card">
+      <label>Service</label>
+      <select id="serviceType" name="serviceType" required>
+        <option value="">-- Select Service --</option>
+      </select>
+
+      <input id="fullName" name="fullName" type="text" placeholder="Full name" required>
+      <input id="email" name="email" type="email" placeholder="Email" required>
+      <input id="phone" name="phone" type="tel" placeholder="Phone number" required>
+      <label>Upload supporting document (optional)</label>
+      <input id="supportDoc" name="supportDoc" type="file" accept=".pdf,.jpg,.png,.jpeg">
+      <textarea id="notes" name="notes" rows="4" placeholder="Additional details (address, DOB...)" ></textarea>
+      <div class="form-row">
+        <button class="btn gradient" type="submit">Submit Request</button>
+        <span id="request-status" class="status"></span>
+      </div>
+    </form>
+  </main>
+
+  <footer class="site-footer"><div class="wrap footer-inner"><div><strong>JD Communication Services</strong><br>Contact: <a href="mailto:contact@jdguru2310@gmail.com">contact@jdguru2310@gmail.com</a></div><div>© 2025</div></div></footer>
+
+<script>
+const firebaseConfig = {"apiKey": "AIzaSyCtsvnqIhbUdu7yix2RiEG2kWfeYpPznaw", "authDomain": "jdcommunicationservice.firebaseapp.com", "projectId": "jdcommunicationservice", "storageBucket": "jdcommunicationservice.appspot.com", "messagingSenderId": "236880191917", "appId": "1:236880191917:web:014d44b8ed928c90570124", "measurementId": "G-3B0BRQZ6XS"};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+const SERVICES = [
+  { id: "community", title: "Community Certificate" },
+  { id: "income", title: "Income Certificate" },
+  { id: "nativity", title: "Nativity Certificate" },
+  { id: "pan", title: "PAN Card" },
+  { id: "voter", title: "Voter ID" },
+  { id: "obc", title: "OBC Certificate" },
+  { id: "pstm", title: "PSTM Certificate" }
+];
+
+const serviceSelect = document.getElementById('serviceType');
+const homeGrid = document.getElementById('home-services');
+SERVICES.forEach(s => {
+  const opt = document.createElement('option');
+  opt.value = s.id; opt.textContent = s.title;
+  if(serviceSelect) serviceSelect.appendChild(opt);
+  if(homeGrid){
+    const c = document.createElement('div'); c.className='card service-card';
+    c.innerHTML = '<h4>' + s.title + '</h4><p class="muted">Apply for ' + s.title + ' quickly.</p><div style="margin-top:10px"><a href="request.html?service=' + s.id + '" class="btn gradient">Apply</a></div>';
+    homeGrid.appendChild(c);
+  }
+});
+
+const params = new URLSearchParams(location.search);
+const pre = params.get('service');
+if(pre && serviceSelect) serviceSelect.value = pre;
+
+document.getElementById('request-form').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const statusEl = document.getElementById('request-status');
+  statusEl.textContent = "Processing...";
+  const fullName = document.getElementById('fullName').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const service = document.getElementById('serviceType').value;
+  const notes = document.getElementById('notes').value.trim();
+  const fileInput = document.getElementById('supportDoc');
+  try{
+    let fileURL = "";
+    if(fileInput.files && fileInput.files[0]){
+      const file = fileInput.files[0];
+      const ref = storage.ref('uploads/' + Date.now() + '_' + file.name);
+      const snap = await ref.put(file);
+      fileURL = await snap.ref.getDownloadURL();
+    }
+    const doc = {
+      service: service, fullName: fullName, email: email, phone: phone, notes: notes, fileURL: fileURL, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    const res = await db.collection('service_requests').add(doc);
+    statusEl.textContent = "✅ Request submitted! Ref: " + res.id;
+    e.target.reset();
+  }catch(err){
+    console.error(err);
+    statusEl.textContent = "❌ Error: " + (err.message || err);
+  }
+});
+</script>
+
+</body></html>
